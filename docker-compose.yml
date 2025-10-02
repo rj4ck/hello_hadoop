@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
@@ -9,7 +7,6 @@ services:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
       - namenode:/hadoop/dfs/name
-      - hadoop-config:/opt/hadoop-3.2.1/etc/hadoop
     ports:
       - "9870:9870"
     networks:
@@ -36,7 +33,7 @@ services:
       - hadoop-net
 
   spark-master:
-    image: bde2020/spark-master:3.3.0-hadoop3.3
+    image: bitnamilegacy/spark:3.3
     container_name: spark-master
     environment:
       - SPARK_MODE=master
@@ -46,7 +43,7 @@ services:
       - hadoop-net
 
   spark-worker:
-    image: bde2020/spark-master:3.3.0-hadoop3.3
+    image: bitnamilegacy/spark:3.3
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
@@ -55,18 +52,19 @@ services:
       - hadoop-net
 
   client:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    image: jupyter/pyspark-notebook:latest
     container_name: client
-    command: sleep infinity
+    user: root
+    command: bash -c "cd /opt && wget -q https://archive.apache.org/dist/hadoop/common/hadoop-3.3.0/hadoop-3.3.0.tar.gz && tar -xzf hadoop-3.3.0.tar.gz && ln -sf hadoop-3.3.0 hadoop && rm hadoop-3.3.0.tar.gz && mkdir -p /opt/hadoop/etc/hadoop && echo '<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration><property><name>fs.defaultFS</name><value>hdfs://namenode:9000</value></property></configuration>' > /opt/hadoop/etc/hadoop/core-site.xml && chmod +x /opt/hadoop/bin/* && sleep infinity"
     volumes:
-      - ./data:/data         # Para vehiculos_gps.csv y otros archivos de datos
-      - ./scripts:/scripts   # Para tus scripts .py
-      - hadoop-config:/opt/hadoop-3.2.1/etc/hadoop  # Configuración compartida
+      - ./data:/data         # Para cargar vehiculos_gps.csv
+      - ./scripts:/scripts   # Para guardar tus scripts .py
     environment:
-      - SPARK_MODE=client
-      - CLUSTER_NAME=bigdata-cluster
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - HADOOP_CONF_DIR=/opt/hadoop-3.2.1/etc/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+      - HADOOP_HOME=/opt/hadoop
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_HOME=/usr/local/spark
+      - PATH=/usr/local/spark/bin:/opt/hadoop/bin:/usr/bin:$PATH
     networks:
       - hadoop-net
 
@@ -74,7 +72,6 @@ volumes:
   namenode:
   datanode1:
   datanode2:
-  hadoop-config:
 
 networks:
   hadoop-net:

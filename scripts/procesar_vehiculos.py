@@ -10,9 +10,11 @@ df = spark.read.option("header", "true").csv("hdfs:///user/alumno/datos/vehiculo
 df = df.withColumn("ubicacion", concat_ws(",", df["latitud"], df["longitud"]))
 
 # Agrupar por vehículo y fecha, contar ubicaciones únicas
-resumen = df.groupBy("vehiculo_id", "fecha").agg(
-    countDistinct("ubicacion").alias("ubicaciones")
-)
+resumen = df.groupBy("vehiculo_id", "fecha").agg(countDistinct("ubicacion").alias("ubicaciones"))
 
 # Guardar en Parquet
 resumen.write.mode("overwrite").parquet("hdfs:///user/alumno/salida/ubicaciones_por_dia")
+
+
+
+
